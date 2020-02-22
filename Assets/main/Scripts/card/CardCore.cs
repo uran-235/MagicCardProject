@@ -8,6 +8,7 @@ using UnityEngine;
 using System.Linq;
 using main.handcard;
 using UnityEngine.UI;
+using main.input;
 
 namespace main.card
 {
@@ -16,17 +17,21 @@ namespace main.card
         private readonly ReactiveProperty<Vector2> _initialPosition = new ReactiveProperty<Vector2>();
         public IReadOnlyReactiveProperty<Vector2> CurrentInitialPosition => _initialPosition;
 
-        private HandCardManager handCardManager = default;
+        //private HandCardManager handCardManager = default;
+        private CardUseProvider cardUseProvider;
         private RectTransform rectTransform;
+
+        public bool canUse;
         public int handCardIndex { private set; get; }
         public bool isNextCard { private set; get; }
-        public bool canUse;
         public Vector3 initializePosition { private set; get; }
+        public CardInfo cardInfo;
 
-        public void Init(int handCardIndex, Vector2 initialPosition, bool isNextCard)
+        public void Init(int handCardIndex, Vector2 initialPosition, CardInfo cardInfo, bool isNextCard)
         {
             canUse = !isNextCard;
             this.isNextCard = isNextCard;
+            this.cardInfo = cardInfo;
             this.handCardIndex = handCardIndex;
             _initialPosition.Value = initialPosition;
             if (isNextCard)
@@ -39,13 +44,15 @@ namespace main.card
         private void Start()
         {
             rectTransform = GetComponent<RectTransform>();
-            handCardManager = GameObject.Find("Manager").GetComponent<HandCardManager>();
-            handCardManager.OnAnyCardUsed
-                .Where(x => x < handCardIndex)
-                .Subscribe(index =>
+            //handCardManager = GameObject.Find("Manager").GetComponent<HandCardManager>();
+            cardUseProvider = GameObject.Find("Manager").GetComponent<CardUseProvider>();
+            cardUseProvider.OnCardTaken
+                .Where(x => x.handCardIndex < handCardIndex)
+                .Subscribe(takeInfo =>
                 {
-                    RearrangeHandCardAsync(index, this.GetCancellationTokenOnDestroy()).Forget();
-                });
+                    RearrangeHandCardAsync(takeInfo.handCardIndex, this.GetCancellationTokenOnDestroy()).Forget();
+                })
+                .AddTo(this);
         }
 
         private void SetCardMaterial(int index)

@@ -12,7 +12,17 @@ namespace main.input
 {
     public class CardUseProvider : MonoBehaviour
     {
-        private IUsable currentUseObject;
+        private GameObject currentUseObject;
+
+        private Subject<TakeInfo> _onTakeSubject = new Subject<TakeInfo>();
+        public IObservable<TakeInfo> OnCardTaken => _onTakeSubject;
+
+        private Vector2 startPosition;
+
+        //カード使用の有効距離
+        private const float ENABLE_TAKE_CARD_DISTANCE = 200.0f;
+        //カード使用の有効角度
+        private const float ENABLE_TAKE_CARD_ANGLE = 0.75f;
 
         private void Start()
         {
@@ -21,11 +31,15 @@ namespace main.input
 
             input.CurrentState
                 .Where(_ => handCardManager.HandCardEnabled.Value)
-                .Where(x => (x == TouchPhase.Moved) && input.TouchObject.Value.GetComponent<IUsable>() != null)
+                .Where(x => (x == TouchPhase.Moved) && input.TouchObject.Value.GetComponent<IUsableCard>() != null)
                 .Subscribe(_ =>
                 {
-                    currentUseObject = input.TouchObject.Value.GetComponent<IUsable>();
-                    currentUseObject.Use();
+                    currentUseObject = input.TouchObject.Value;
+                    bool tryUse = currentUseObject.GetComponent<IUsableCard>().Use();
+                    if (tryUse)
+                    {
+                        startPosition = currentUseObject.GetComponent<RectTransform>().localPosition;
+                    }
                 })
                 .AddTo(this);
 
@@ -35,11 +49,45 @@ namespace main.input
                     {
                         if(currentUseObject != null)
                         {
-                            currentUseObject.Release();
+                            bool tryRelease = currentUseObject.GetComponent<IUsableCard>().Release();
+                            if (tryRelease)
+                            {
+                                ChangeTakeState(currentUseObject);
+                            }
                             currentUseObject = null;
                         }
                     })
                     .AddTo(this);
+
+            _onTakeSubject.AddTo(this);
+        }
+
+        private void ChangeTakeState(GameObject useObject)
+        {
+            Vector2 endPosition = useObject.GetComponent<RectTransform>().localPosition;
+            int cardIndex = currentUseObject.GetComponent<CardCore>().handCardIndex;
+
+            if (Vector2.Distance(startPosition, endPosition) > ENABLE_TAKE_CARD_DISTANCE)
+            {
+                var diff = Vector2.Dot((endPosition - startPosition).normalized, new Vector2(0, 1));
+                if (diff < -1.0f * ENABLE_TAKE_CARD_ANGLE)
+                {
+                    //ThrowAway
+                    _onTakeSubject.OnNext(new TakeInfo { handCardIndex = cardIndex, takeState = TakeState.ThrowAway });
+                    Destroy(useObject);
+                    return;
+                }
+
+                if (diff > ENABLE_TAKE_CARD_ANGLE)
+                {
+                    //Use
+                    _onTakeSubject.OnNext(new TakeInfo { handCardIndex = cardIndex, takeState = TakeState.Use });
+                    Destroy(useObject);
+                    return;
+                }
+            }
+            //Undo
+            useObject.GetComponent<RectTransform>().localPosition = startPosition;
         }
     }
 }

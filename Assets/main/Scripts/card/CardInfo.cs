@@ -2,11 +2,10 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace main.input
+namespace main.card
 {
-    public enum TakeState
+    public struct CardInfo
     {
-        ThrowAway,
-        Use
+        public CardType cardType;
     }
 }

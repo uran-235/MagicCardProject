@@ -8,12 +8,16 @@ namespace main.card
 {
     public class CardInitialMover : MonoBehaviour
     {
-        private const float MOVE_SPEED = 2.0f;
+        private const float MOVE_TIME = 0.5f;
 
         private CardCore cardCore;
         private RectTransform rectTransform;
-        private Vector2 initializePosition;
+        //private Vector2 initializePosition;
+        //private Vector2 updateDist;
         private bool shouldMove = false;
+        private float startTime;
+        private Vector2 startPosition;
+        private Vector2 endPosition;
 
         private void Start()
         {
@@ -24,7 +28,10 @@ namespace main.card
                 .DistinctUntilChanged()
                 .Subscribe(x =>
                 {
-                    initializePosition = x;
+                    //updateDist = (initializePosition - (Vector2)rectTransform.localPosition) * MOVE_SPEED;
+                    startTime = Time.timeSinceLevelLoad;
+                    startPosition = rectTransform.localPosition;
+                    endPosition = x;
                     shouldMove = true;
                     if (!cardCore.isNextCard)
                     {
@@ -38,13 +45,24 @@ namespace main.card
         {
             if (shouldMove)
             {
-                Vector2 dist = (initializePosition - (Vector2)rectTransform.localPosition) * Time.deltaTime * MOVE_SPEED;
-                rectTransform.localPosition += (Vector3)dist;
-                if(dist.magnitude < 0.25f)
+                var diff = Time.timeSinceLevelLoad - startTime;
+                if(diff > MOVE_TIME)
                 {
-                    rectTransform.localPosition = initializePosition;
+                    rectTransform.localPosition = endPosition;
                     shouldMove = false;
                 }
+
+                var rate = diff / MOVE_TIME;
+
+                rectTransform.localPosition = Vector3.Lerp(startPosition, endPosition, rate);
+
+                //Vector2 dist = updateDist * Time.deltaTime;
+                //rectTransform.localPosition += (Vector3)dist;
+                //if(dist.magnitude < 0.25f)
+                //{
+                //    rectTransform.localPosition = initializePosition;
+                //    shouldMove = false;
+                //}
             }
         }
     }
