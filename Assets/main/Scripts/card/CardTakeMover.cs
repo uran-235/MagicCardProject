@@ -14,17 +14,21 @@ namespace main.card
         private const float ENABLE_TAKE_CARD_DISTANCE = 200.0f;
         private const float ENABLE_TAKE_CARD_ANGLE = 0.75f;
 
+        public Subject<int> _onUseSubject = new Subject<int>();
+        public IObservable<int> OnCardUsed => _onUseSubject;
+
         private CardCore cardCore;
         private RectTransform rectTransform;
         private Vector2 startPosition;
         private bool isTouch = false;
-        private Subject<int> _onUseSubject;
+        //private Subject<int> _onUseSubject;
 
         private void Start()
         {
-            _onUseSubject = GameObject.Find("Manager").GetComponent<HandCardManager>()._onUseSubject;
+            //_onUseSubject = GameObject.Find("Manager").GetComponent<HandCardManager>()._onUseSubject;
             cardCore = GetComponent<CardCore>();
             rectTransform = GetComponent<RectTransform>();
+            _onUseSubject.AddTo(this);
         }
 
         public void Use()

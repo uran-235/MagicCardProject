@@ -40,7 +40,7 @@ namespace main.card
         {
             rectTransform = GetComponent<RectTransform>();
             handCardManager = GameObject.Find("Manager").GetComponent<HandCardManager>();
-            handCardManager.OnHandCardUsed
+            handCardManager.OnAnyCardUsed
                 .Where(x => x < handCardIndex)
                 .Subscribe(index =>
                 {

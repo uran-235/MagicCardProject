@@ -21,33 +21,39 @@ namespace main.handcard
         private readonly BoolReactiveProperty _onHandCardEnabled = new BoolReactiveProperty(false);
         public IReadOnlyReactiveProperty<bool> HandCardEnabled => _onHandCardEnabled;
 
-        public Subject<int> _onUseSubject { private set; get; } = new Subject<int>();
-        public IObservable<int> OnHandCardUsed => _onUseSubject;
+        private Subject<int> _onAnyCardUseSubject = new Subject<int>();
+        public IObservable<int> OnAnyCardUsed => _onAnyCardUseSubject;
+
+        private List<IObservable<int>> cardUseObservers = new List<IObservable<int>>();
         
-        private Subject<int> _onCardCreateSubject = new Subject<int>();
-        public IObservable<int> OnHandCardCreate => _onCardCreateSubject;
+        //private Subject<int> _onCardCreateSubject = new Subject<int>();
+        //public IObservable<int> OnHandCardCreate => _onCardCreateSubject;
 
         private GameStateManager gameStateManager;
+        private HandCardFactory handCardFactory;
 
-        private List<GameObject> handCards = new List<GameObject>();
+        //private List<GameObject> handCards = new List<GameObject>();
 
         private void Start()
         {
             gameStateManager = GetComponent<GameStateManager>();
+            handCardFactory = GetComponent<HandCardFactory>();
 
             gameStateManager.CurrentState
                 .FirstOrDefault(x => x == GameState.Battle)
                 .Subscribe(_ => {
                     for(int i = 1; i <= HANDCARD_NUM + 1; i++)
                     {
-                        _onCardCreateSubject.OnNext(i);
+                        var obj = handCardFactory.CreateHandCard(i, HANDCARD_NUM);
+                        cardUseObservers.Add(obj.GetComponent<IUsable>().OnCardUsed);
+                        //_onCardCreateSubject.OnNext(i);
                         //handCards.Add(CreateHandCard(i));
                     }
                     CreateLoopAsync(this.GetCancellationTokenOnDestroy()).Forget();
                 });
 
-            _onUseSubject.AddTo(this);
-            _onCardCreateSubject.AddTo(this);
+            _onAnyCardUseSubject.AddTo(this);
+            //_onCardCreateSubject.AddTo(this);
             _onHandCardEnabled.AddTo(this);
         }
 
@@ -70,15 +76,24 @@ namespace main.handcard
 
                 _onHandCardEnabled.Value = true;
                 Debug.Log("HandCardEnabled true");
+                
+                var useCardIndex = await UniTask.WhenAny(cardUseObservers.Select(x => x.ToUniTask(useFirstValue: true, cancellationToken: token)).ToArray());
+                //int useCardIndex = await _onUseSubject.ToUniTask(useFirstValue: true, cancellationToken: token);
 
-                int useCardIndex = await _onUseSubject.ToUniTask(useFirstValue: true, cancellationToken: token);
+                Debug.Log(useCardIndex.winArgumentIndex);
+                _onAnyCardUseSubject.OnNext(useCardIndex.winArgumentIndex + 1);
+
+                cardUseObservers.RemoveAt(useCardIndex.winArgumentIndex);
 
                 _onHandCardEnabled.Value = false;
                 Debug.Log("HandCardEnabled false");
 
+                var obj = handCardFactory.CreateHandCard(HANDCARD_NUM + 1, HANDCARD_NUM);
+                cardUseObservers.Add(obj.GetComponent<IUsable>().OnCardUsed);
+
                 //_onUseSubject.OnNext(useCardIndex);
 
-                _onCardCreateSubject.OnNext(HANDCARD_NUM + 1);
+                //_onCardCreateSubject.OnNext(HANDCARD_NUM + 1);
                 //handCards.Add(CreateHandCard(HANDCARD_NUM + 1));
             }
         }
