@@ -36,7 +36,6 @@ namespace main.card
                     }
                 })
                 .AddTo(this);
-
         }
     }
 }

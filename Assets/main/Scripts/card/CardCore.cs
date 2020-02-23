@@ -23,8 +23,7 @@ namespace main.card
         private HandCardManager handCardManager;
         private CardUseProvider cardUseProvider;
         private RectTransform rectTransform;
-
-        //public bool canUse { private set; get; }
+        
         public int handCardIndex { private set; get; }
         public bool isNextCard { private set; get; }
         public Vector3 initializePosition { private set; get; }
@@ -41,7 +40,6 @@ namespace main.card
             {
                 GetComponent<RectTransform>().localScale = new Vector3(0.6f, 0.6f, 1.0f);
             }
-            //SetCardMaterial(cardInfo.cardType);
         }
 
         private void Start()
@@ -54,10 +52,6 @@ namespace main.card
                 .Subscribe(x => 
                     {
                         _canUse.Value = x;
-                        //if (x)
-                        //{
-                        //    SetCardMaterial(cardInfo.cardType);
-                        //}
                     })
                 .AddTo(this);
 
@@ -77,16 +71,10 @@ namespace main.card
                     if ((int)takeInfo.cardInfo.cardType > (int)this.cardInfo.cardType)
                     {
                         _canUse.Value = false;
-                        //GetComponent<Image>().color -= new Color(0.0f, 0.0f, 0.0f, 0.5f);
                     }
                 })
                 .AddTo(this);
         }
-
-        //private void SetCardMaterial(CardType type)
-        //{
-        //    GetComponent<Image>().color = CARD_COLOR_TYPE[(int)type];
-        //}
 
         private async UniTaskVoid RearrangeHandCardAsync(TakeInfo takeInfo, CancellationToken token)
         {
@@ -94,7 +82,6 @@ namespace main.card
             {
                 isNextCard = false;
                 if ((int)takeInfo.cardInfo.cardType <= (int)this.cardInfo.cardType) _canUse.Value = true;
-                //canUse = true;
             }
             var delay = (handCardIndex - takeInfo.handCardIndex - 1) * 100;
             await UniTask.Delay(delay, cancellationToken: token);

@@ -76,13 +76,11 @@ namespace main.input
                     //ThrowAway
                     _onTakeSubject.OnNext(new TakeInfo { handCardIndex = cardIndex, takeState = TakeState.ThrowAway });
                     useObject.SetActive(false);
-                    //Destroy(useObject);
                 }else if (diff > ENABLE_TAKE_CARD_ANGLE)
                 {
                     //Use
                     _onTakeSubject.OnNext(new TakeInfo { handCardIndex = cardIndex, takeState = TakeState.Use, cardInfo = cardInfo });
                     useObject.SetActive(false);
-                    //Destroy(useObject);
                 }
             }
             //Undo

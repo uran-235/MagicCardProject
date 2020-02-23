@@ -21,9 +21,7 @@ namespace main.handcard
 
         private readonly BoolReactiveProperty _onHandCardEnabled = new BoolReactiveProperty(false);
         public IReadOnlyReactiveProperty<bool> HandCardEnabled => _onHandCardEnabled;
-
-        //private Subject<CardInfo> _onUseSubject = new Subject<CardInfo>();
-        //public IObservable<CardInfo> OnCardUsed => _onUseSubject;
+        
         private bool enabledThrowAway = true;
 
         private GameStateManager gameStateManager;
@@ -31,7 +29,6 @@ namespace main.handcard
         private HandCardFactory handCardFactory;
 
         private List<GameObject> handCards = new List<GameObject>();
-        //public readonly ReactiveCollection<GameObject> handCards = new ReactiveCollection<GameObject>();
 
         private void Start()
         {
@@ -51,7 +48,6 @@ namespace main.handcard
                 });
             
             _onHandCardEnabled.AddTo(this);
-            //_onUseSubject.AddTo(this);
         }
 
         private async UniTaskVoid CreateLoopAsync(CancellationToken token)
@@ -70,8 +66,7 @@ namespace main.handcard
                     await UniTask.Delay(900, cancellationToken: token);
 
                     var takeCardInfo = await cardUseProvider.OnCardTaken.ToUniTask(useFirstValue: true, cancellationToken: token);
-
-                    //_onUseSubject.OnNext(handCards[takeCardInfo.handCardIndex].GetComponent<CardCore>().cardInfo);
+                    
                     if (!enabledThrowAway && takeCardInfo.takeState == TakeState.ThrowAway)
                     {
                         continue;
