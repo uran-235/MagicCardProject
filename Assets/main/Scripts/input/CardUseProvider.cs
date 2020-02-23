@@ -66,6 +66,7 @@ namespace main.input
         {
             Vector2 endPosition = useObject.GetComponent<RectTransform>().localPosition;
             int cardIndex = currentUseObject.GetComponent<CardCore>().handCardIndex;
+            CardInfo cardInfo = currentUseObject.GetComponent<CardCore>().cardInfo;
 
             if (Vector2.Distance(startPosition, endPosition) > ENABLE_TAKE_CARD_DISTANCE)
             {
@@ -74,16 +75,14 @@ namespace main.input
                 {
                     //ThrowAway
                     _onTakeSubject.OnNext(new TakeInfo { handCardIndex = cardIndex, takeState = TakeState.ThrowAway });
-                    Destroy(useObject);
-                    return;
-                }
-
-                if (diff > ENABLE_TAKE_CARD_ANGLE)
+                    useObject.SetActive(false);
+                    //Destroy(useObject);
+                }else if (diff > ENABLE_TAKE_CARD_ANGLE)
                 {
                     //Use
-                    _onTakeSubject.OnNext(new TakeInfo { handCardIndex = cardIndex, takeState = TakeState.Use });
-                    Destroy(useObject);
-                    return;
+                    _onTakeSubject.OnNext(new TakeInfo { handCardIndex = cardIndex, takeState = TakeState.Use, cardInfo = cardInfo });
+                    useObject.SetActive(false);
+                    //Destroy(useObject);
                 }
             }
             //Undo

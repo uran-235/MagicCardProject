@@ -9,5 +9,6 @@ namespace main.card
     {
         public int handCardIndex;
         public TakeState takeState;
+        public CardInfo cardInfo;
     }
 }

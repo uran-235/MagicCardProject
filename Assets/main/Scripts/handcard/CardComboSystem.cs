@@ -7,11 +7,20 @@ namespace main.handcard
 {
     public class CardComboSystem : MonoBehaviour
     {
-        private CardType beforeCardType = CardType.Fire;
+        //private HandCardManager handCardManager;
+        ////private List<int> handCardTypeList
 
-        public bool isChainCombo(CardType cardType)
-        {
-            return cardType <= beforeCardType;
-        }
+        //private void Start()
+        //{
+        //    handCardManager = GetComponent<HandCardManager>();
+        //    handCardManager.handCards
+        //        .ObserveAdd()
+        //        .Subscribe(_ => );
+        //}
+
+        //public bool isChainCombo(CardType cardType)
+        //{
+        //    return cardType <= beforeCardType;
+        //}
     }
 }

@@ -23,11 +23,11 @@ namespace main.card
 
         public bool Use()
         {
-            if (cardCore.canUse)
+            if (cardCore.CurrentCanUse.Value)
             {
                 isTouch = true;
             }
-            return cardCore.canUse;
+            return cardCore.CurrentCanUse.Value;
         }
 
         public bool Release()

@@ -11,6 +11,7 @@ using UnityEngine;
 using System.Linq;
 using Zenject;
 using main.input;
+using System.Collections.ObjectModel;
 
 namespace main.handcard
 {
@@ -21,9 +22,16 @@ namespace main.handcard
         private readonly BoolReactiveProperty _onHandCardEnabled = new BoolReactiveProperty(false);
         public IReadOnlyReactiveProperty<bool> HandCardEnabled => _onHandCardEnabled;
 
+        //private Subject<CardInfo> _onUseSubject = new Subject<CardInfo>();
+        //public IObservable<CardInfo> OnCardUsed => _onUseSubject;
+        private bool enabledThrowAway = true;
+
         private GameStateManager gameStateManager;
         private CardUseProvider cardUseProvider;
         private HandCardFactory handCardFactory;
+
+        private List<GameObject> handCards = new List<GameObject>();
+        //public readonly ReactiveCollection<GameObject> handCards = new ReactiveCollection<GameObject>();
 
         private void Start()
         {
@@ -34,14 +42,16 @@ namespace main.handcard
             gameStateManager.CurrentState
                 .FirstOrDefault(x => x == GameState.Battle)
                 .Subscribe(_ => {
-                    for(int i = 1; i <= HANDCARD_NUM + 1; i++)
+                    for(int i = 0; i < HANDCARD_NUM + 1; i++)
                     {
                         var obj = handCardFactory.CreateHandCard(i, HANDCARD_NUM);
+                        handCards.Add(obj);
                     }
                     CreateLoopAsync(this.GetCancellationTokenOnDestroy()).Forget();
                 });
             
             _onHandCardEnabled.AddTo(this);
+            //_onUseSubject.AddTo(this);
         }
 
         private async UniTaskVoid CreateLoopAsync(CancellationToken token)
@@ -51,23 +61,48 @@ namespace main.handcard
 
             while (!token.IsCancellationRequested)
             {
-                await UniTask.Delay(1000, cancellationToken: token);
-
+                enabledThrowAway = true;
                 _onHandCardEnabled.Value = true;
                 Debug.Log("HandCardEnabled true");
-                
-                var takeCardInfo = await cardUseProvider.OnCardTaken.ToUniTask(useFirstValue: true, cancellationToken: token);
-                
-                var obj = handCardFactory.CreateHandCard(HANDCARD_NUM + 1, HANDCARD_NUM);
 
-                if(takeCardInfo.takeState == TakeState.Use)
+                while (!isAllCardDisabled())
                 {
+                    await UniTask.Delay(900, cancellationToken: token);
 
+                    var takeCardInfo = await cardUseProvider.OnCardTaken.ToUniTask(useFirstValue: true, cancellationToken: token);
+
+                    //_onUseSubject.OnNext(handCards[takeCardInfo.handCardIndex].GetComponent<CardCore>().cardInfo);
+                    if (!enabledThrowAway && takeCardInfo.takeState == TakeState.ThrowAway)
+                    {
+                        continue;
+                    }
+                    
+                    if (takeCardInfo.takeState == TakeState.Use)
+                    {
+                        enabledThrowAway = false;
+                    }
+
+                    Destroy(handCards[takeCardInfo.handCardIndex].gameObject);
+                    handCards.RemoveAt(takeCardInfo.handCardIndex);
+
+                    var obj = handCardFactory.CreateHandCard(HANDCARD_NUM, HANDCARD_NUM);
+                    handCards.Add(obj);
                 }
 
                 _onHandCardEnabled.Value = false;
                 Debug.Log("HandCardEnabled false");
+
+                await UniTask.Delay(100, cancellationToken: token);
             }
+        }
+
+        private bool isAllCardDisabled()
+        {
+            foreach(var obj in handCards)
+            {
+                if (obj.GetComponent<CardCore>().CurrentCanUse.Value) return false;
+            }
+            return true;
         }
     }
 }
