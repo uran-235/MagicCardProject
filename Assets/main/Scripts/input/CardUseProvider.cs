@@ -12,11 +12,10 @@ namespace main.input
 {
     public class CardUseProvider : MonoBehaviour
     {
-        private GameObject currentUseObject;
-
         private Subject<TakeInfo> _onTakeSubject = new Subject<TakeInfo>();
         public IObservable<TakeInfo> OnCardTaken => _onTakeSubject;
 
+        private GameObject currentUseObject;
         private Vector2 startPosition;
 
         //カード使用の有効距離
@@ -27,18 +26,21 @@ namespace main.input
         private void Start()
         {
             var input = GetComponent<IInputEventProvider>();
-            var handCardManager = GetComponent<HandCardManager>();
+            //var handCardManager = GetComponent<HandCardManager>();
 
             input.CurrentState
-                .Where(_ => handCardManager.HandCardEnabled.Value)
-                .Where(x => (x == TouchPhase.Moved) && input.TouchObject.Value.GetComponent<IUsableCard>() != null)
+                //.Where(_ => handCardManager.HandCardEnabled.Value)
+                .Where(x => x == TouchPhase.Moved)
                 .Subscribe(_ =>
                 {
-                    currentUseObject = input.TouchObject.Value;
+                    var touchObj = input.TouchObject.Value;
+                    if (touchObj == null || touchObj.GetComponent<IUsableCard>() == null) return;
+
+                    currentUseObject = touchObj;
                     bool tryUse = currentUseObject.GetComponent<IUsableCard>().Use();
                     if (tryUse)
                     {
-                        startPosition = currentUseObject.GetComponent<RectTransform>().localPosition;
+                        startPosition = currentUseObject.GetComponent<CardCore>().CurrentInitialPosition.Value;
                     }
                 })
                 .AddTo(this);
@@ -75,12 +77,12 @@ namespace main.input
                 {
                     //ThrowAway
                     _onTakeSubject.OnNext(new TakeInfo { handCardIndex = cardIndex, takeState = TakeState.ThrowAway });
-                    useObject.SetActive(false);
+                    //useObject.SetActive(false);
                 }else if (diff > ENABLE_TAKE_CARD_ANGLE)
                 {
                     //Use
                     _onTakeSubject.OnNext(new TakeInfo { handCardIndex = cardIndex, takeState = TakeState.Use, cardInfo = cardInfo });
-                    useObject.SetActive(false);
+                    //useObject.SetActive(false);
                 }
             }
             //Undo

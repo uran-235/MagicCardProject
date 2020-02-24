@@ -21,7 +21,7 @@ namespace main.card
         public IReadOnlyReactiveProperty<bool> CurrentCanUse => _canUse;
 
         private HandCardManager handCardManager;
-        private CardUseProvider cardUseProvider;
+        //private CardUseProvider cardUseProvider;
         private RectTransform rectTransform;
         
         public int handCardIndex { private set; get; }
@@ -55,8 +55,9 @@ namespace main.card
                     })
                 .AddTo(this);
 
-            cardUseProvider = GameObject.Find("Manager").GetComponent<CardUseProvider>();
-            cardUseProvider.OnCardTaken
+            //cardUseProvider = GameObject.Find("Manager").GetComponent<CardUseProvider>();
+            //cardUseProvider.OnCardTaken
+            handCardManager.OnRearrangeCard
                 .Where(x => x.handCardIndex < handCardIndex)
                 .Subscribe(takeInfo =>
                 {
@@ -64,7 +65,7 @@ namespace main.card
                 })
                 .AddTo(this);
 
-            cardUseProvider.OnCardTaken
+            handCardManager.OnRearrangeCard
                 .Where(_ => !isNextCard && _canUse.Value)
                 .Subscribe(takeInfo =>
                 {

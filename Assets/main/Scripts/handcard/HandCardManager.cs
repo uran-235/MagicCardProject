@@ -22,6 +22,9 @@ namespace main.handcard
         private readonly BoolReactiveProperty _onHandCardEnabled = new BoolReactiveProperty(false);
         public IReadOnlyReactiveProperty<bool> HandCardEnabled => _onHandCardEnabled;
         
+        private Subject<TakeInfo> _onRearrangeSubject = new Subject<TakeInfo>();
+        public IObservable<TakeInfo> OnRearrangeCard => _onRearrangeSubject;
+
         private bool enabledThrowAway = true;
 
         private GameStateManager gameStateManager;
@@ -48,9 +51,10 @@ namespace main.handcard
                 });
             
             _onHandCardEnabled.AddTo(this);
+            _onRearrangeSubject.AddTo(this);
         }
 
-        private async UniTaskVoid CreateLoopAsync(CancellationToken token)
+        private async UniTask CreateLoopAsync(CancellationToken token)
         {
             // 開始直後にちょっと待つ
             await UniTask.Delay(1000, cancellationToken: token);
@@ -77,6 +81,8 @@ namespace main.handcard
                         enabledThrowAway = false;
                     }
 
+                    _onRearrangeSubject.OnNext(takeCardInfo);
+
                     Destroy(handCards[takeCardInfo.handCardIndex].gameObject);
                     handCards.RemoveAt(takeCardInfo.handCardIndex);
 
@@ -86,8 +92,6 @@ namespace main.handcard
 
                 _onHandCardEnabled.Value = false;
                 Debug.Log("HandCardEnabled false");
-
-                await UniTask.Delay(100, cancellationToken: token);
             }
         }
 
