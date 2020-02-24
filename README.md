@@ -27,4 +27,7 @@
           「水(rank 1)」 ・・・　使用可  
           「雷(rank 2)」 ・・・　使用可    
       
-      使用不可になったカードは、半透明になる。
+      使用不可になったカードは、半透明になる。  
+      
+#### ・UML  
+![MagicCardProjectUML](https://user-images.githubusercontent.com/59385642/75191923-a26d3b80-5796-11ea-8d9e-1e37136ff0a1.png)
